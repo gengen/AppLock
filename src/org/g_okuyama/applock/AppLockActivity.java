@@ -7,8 +7,7 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
@@ -29,8 +28,6 @@ public class AppLockActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_app_lock);
-
-		//TODO　ロックリストの取得(sharedpreferenceなどから)
 		
 		displayAppList();
 		setListener();
@@ -40,7 +37,6 @@ public class AppLockActivity extends Activity {
 		ArrayList<AppData> appDataList = new ArrayList<AppData>();
 		
 		PackageManager pm = getPackageManager();
-		//List<ApplicationInfo> applist = pm.getInstalledApplications(0);
         Intent intent = new Intent(Intent.ACTION_MAIN, null);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         List<ResolveInfo> appInfo = pm.queryIntentActivities(intent, 0);
@@ -59,8 +55,6 @@ public class AppLockActivity extends Activity {
 			//パッケージ名の設定
 			data.setPackageName(item.activityInfo.packageName);
 			
-			//TODO パッケージ名とロックリストと比較し、ロック対象ならロックフラグを設定する
-			
 			//アイコンの設定
 			Drawable icon = null;
 			try {
@@ -73,37 +67,6 @@ public class AppLockActivity extends Activity {
 			
 			appDataList.add(data);
         }
-        /*
-		for(ApplicationInfo item: applist){
-			//if ((item.flags & ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM) continue;
-			AppData data = new AppData();
-			
-			//アプリ名の設定
-			if(item.loadLabel(pm).toString() != null){
-				data.setAppName(item.loadLabel(pm).toString());
-			}
-			else{
-				data.setAppName("No Name");				
-			}
-			
-			//パッケージ名の設定
-			data.setPackageName(item.packageName);
-
-			//TODO パッケージ名とロックリストと比較し、ロック対象ならロックフラグを設定する
-			
-			//アイコンの設定
-			Drawable icon = null;
-			try {
-				icon = pm.getApplicationIcon(item.packageName);
-			} catch (NameNotFoundException e) {
-				e.printStackTrace();
-				//TODO デフォルトアイコンの設定
-			}
-			data.setDrawable(icon);
-			
-			appDataList.add(data);
-		}
-		*/
 		
         AppArrayAdapter adapter = new AppArrayAdapter(this, android.R.layout.simple_list_item_1, appDataList);
         ListView listview = (ListView)findViewById(R.id.app_lock_list);
@@ -122,27 +85,35 @@ public class AppLockActivity extends Activity {
 		btn.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View arg0) {
-				//TODO ロック保存
-				//String[] lockList = new String[]{};
-				ArrayList<String> lockList = new ArrayList<String>();
-		        ListView view = (ListView)findViewById(R.id.app_lock_list);
-		        AppArrayAdapter adapter = (AppArrayAdapter)view.getAdapter();
-		        int length = adapter.getCount();
-		        for(int i=0; i<length; i++){
-		        	AppData item = adapter.getItem(i);
-		        	if(item.getLockFlag()){
-		        		//lockList[i] = item.getPackageName();
-		        		lockList.add(item.getPackageName());
-		        	}
-		        }
-		        
+				saveLockList();
 		        Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-		        intent.putExtra("LockList", lockList);
 		        startService(intent);
 		        
 		        finish();
 			}
 		});
+	}
+
+	private void saveLockList(){
+		SharedPreferences prefs = getSharedPreferences("LockPref", Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+
+		//SharedPreferenceクリア
+		editor.clear();
+		
+		//保存
+        ListView view = (ListView)findViewById(R.id.app_lock_list);
+        AppArrayAdapter adapter = (AppArrayAdapter)view.getAdapter();
+        int length = adapter.getCount();
+        for(int i=0,idx=1; i<length; i++){
+        	AppData item = adapter.getItem(i);
+        	if(item.getLockFlag()){
+        		Log.d(TAG, "lock = " + item.getPackageName());
+        		editor.putString(""+idx, item.getPackageName());
+        		idx++;
+        	}
+        }
+        editor.commit();
 	}
 
 	@Override

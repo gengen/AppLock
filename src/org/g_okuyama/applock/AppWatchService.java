@@ -2,6 +2,7 @@ package org.g_okuyama.applock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -9,6 +10,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -21,14 +23,15 @@ public class AppWatchService extends Service {
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		Bundle bundle = intent.getExtras();
-		ArrayList<String> list = bundle.getStringArrayList("LockList");
-		if(list != null){
-			mLockList = list;
-		}
-		//2回目以降用
-		if((list == null) && (mLockList == null)){
-			return;
+		mLockList = new ArrayList<String>();
+		SharedPreferences prefs = getSharedPreferences("LockPref", Context.MODE_PRIVATE);
+		Map map = prefs.getAll();
+		int num = map.size();
+		Log.d(AppLockActivity.TAG, "num = " + num);
+		for(int i=1; i<=num; i++){
+			String name = (String)map.get(""+i);
+			mLockList.add(name);
+			Log.d(AppLockActivity.TAG, "name = " + name);
 		}
 
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
