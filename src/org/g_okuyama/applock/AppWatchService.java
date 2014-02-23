@@ -7,7 +7,11 @@ import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -17,11 +21,14 @@ public class AppWatchService extends Service {
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		Log.d("AppWatchService", "service start");
 		Bundle bundle = intent.getExtras();
 		ArrayList<String> list = bundle.getStringArrayList("LockList");
 		if(list != null){
 			mLockList = list;
+		}
+		//2回目以降用
+		if((list == null) && (mLockList == null)){
+			return;
 		}
 
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
@@ -29,16 +36,56 @@ public class AppWatchService extends Service {
 		List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(5);
 		
 		String top = taskInfo.get(0).topActivity.getPackageName();
-		Log.d("AppWatchService", "top app = " + top);
+		//Log.d(AppLockActivity.TAG, "top app = " + top);
 
 		for(String name: mLockList){
-			Log.d("AppWatchService", "name = " + name);
+			//Log.d(AppLockActivity.TAG, "name = " + name);
 
 			if(name.equals(top)) {
-				Log.d("AppWatchService", "Lock App Launch!!");
+				//Log.d(AppLockActivity.TAG, "Lock App Launch!!");
+				//ホームアプリ起動
+				Intent i = new Intent(); 
+				i.setAction(Intent.ACTION_MAIN); 
+				i.addCategory(Intent.CATEGORY_HOME); 
+				i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(i); 
 			}					
 		}
 	}
+	
+	// デフォルトホーム名取得
+	public String getDefaultHomeName(Context context)
+	{
+		PackageManager packagemanager = context.getPackageManager();
+		Intent intent = new Intent(Intent.ACTION_MAIN);
+		intent.addCategory(Intent.CATEGORY_HOME);
+		ResolveInfo resolveInfo = packagemanager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		ActivityInfo activityInfo = resolveInfo.activityInfo;
+		/*
+		Log.d(AppLockActivity.TAG, "package name:"+activityInfo.packageName);
+		Log.d(AppLockActivity.TAG, "package name:"+activityInfo.name);
+		Log.d(AppLockActivity.TAG, "package name:"+activityInfo.loadLabel(packagemanager).toString());
+		*/
+		return activityInfo.name;
+	}
+	
+	/*
+	public void getHomeApp(){
+        PackageManager pm = this.getPackageManager();
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_MAIN);
+        //呼び出したいActivityのカテゴリを指定する
+        intent.addCategory(Intent.CATEGORY_HOME);
+        //カテゴリとアクションに一致するアクティビティの情報を取得する
+        List<ResolveInfo> appInfoList = pm.queryIntentActivities(intent, 0);
+        
+        for(ResolveInfo ri : appInfoList){
+            if(ri.loadLabel(pm).toString()!=null){
+            	Log.d(TAG, "home = " + ri.loadLabel(pm).toString());
+            }
+        }
+	}
+	*/
 
 	private void startAlarmManager(int type, long autoChkTime) {
 		Intent intent = new Intent(this, AppWatchService.class);

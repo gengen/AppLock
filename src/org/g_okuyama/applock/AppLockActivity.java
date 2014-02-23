@@ -5,11 +5,15 @@ import java.util.List;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,6 +23,7 @@ import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class AppLockActivity extends Activity {
+	public static final String TAG = "AppLock";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +40,42 @@ public class AppLockActivity extends Activity {
 		ArrayList<AppData> appDataList = new ArrayList<AppData>();
 		
 		PackageManager pm = getPackageManager();
-		List<ApplicationInfo> applist = pm.getInstalledApplications(BIND_AUTO_CREATE);
-		
+		//List<ApplicationInfo> applist = pm.getInstalledApplications(0);
+        Intent intent = new Intent(Intent.ACTION_MAIN, null);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> appInfo = pm.queryIntentActivities(intent, 0);
+
+        for(ResolveInfo item: appInfo){
+			AppData data = new AppData();
+			
+			//アプリ名の設定
+			if(item.loadLabel(pm).toString() != null){
+				data.setAppName(item.loadLabel(pm).toString());
+			}
+			else{
+				data.setAppName("No Name");				
+			}
+			
+			//パッケージ名の設定
+			data.setPackageName(item.activityInfo.packageName);
+			
+			//TODO パッケージ名とロックリストと比較し、ロック対象ならロックフラグを設定する
+			
+			//アイコンの設定
+			Drawable icon = null;
+			try {
+				icon = pm.getApplicationIcon(item.activityInfo.packageName);
+			} catch (NameNotFoundException e) {
+				e.printStackTrace();
+				//TODO デフォルトアイコンの設定
+			}
+			data.setDrawable(icon);
+			
+			appDataList.add(data);
+        }
+        /*
 		for(ApplicationInfo item: applist){
+			//if ((item.flags & ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM) continue;
 			AppData data = new AppData();
 			
 			//アプリ名の設定
@@ -65,6 +103,7 @@ public class AppLockActivity extends Activity {
 			
 			appDataList.add(data);
 		}
+		*/
 		
         AppArrayAdapter adapter = new AppArrayAdapter(this, android.R.layout.simple_list_item_1, appDataList);
         ListView listview = (ListView)findViewById(R.id.app_lock_list);
@@ -100,6 +139,8 @@ public class AppLockActivity extends Activity {
 		        Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
 		        intent.putExtra("LockList", lockList);
 		        startService(intent);
+		        
+		        finish();
 			}
 		});
 	}
@@ -110,5 +151,4 @@ public class AppLockActivity extends Activity {
 		getMenuInflater().inflate(R.menu.app_lock, menu);
 		return true;
 	}
-
 }
