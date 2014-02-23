@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -24,18 +23,19 @@ public class AppWatchService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		mLockList = new ArrayList<String>();
-		SharedPreferences prefs = getSharedPreferences("LockPref", Context.MODE_PRIVATE);
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_KEY, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
 		int num = map.size();
-		Log.d(AppLockActivity.TAG, "num = " + num);
+		//Log.d(AppLockActivity.TAG, "num = " + num);
 		for(int i=1; i<=num; i++){
 			String name = (String)map.get(""+i);
 			mLockList.add(name);
-			Log.d(AppLockActivity.TAG, "name = " + name);
+			//Log.d(AppLockActivity.TAG, "name = " + name);
 		}
 
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
 		ActivityManager am = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
+		//TODO 引数の"5"は要確認
 		List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(5);
 		
 		String top = taskInfo.get(0).topActivity.getPackageName();

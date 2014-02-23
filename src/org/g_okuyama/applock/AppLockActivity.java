@@ -23,6 +23,7 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
+	public static final String PREF_KEY = "LockPref";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +37,7 @@ public class AppLockActivity extends Activity {
 	private void displayAppList(){
 		ArrayList<AppData> appDataList = new ArrayList<AppData>();
 		
+		//ランチャーから起動できるアプリリストを取得
 		PackageManager pm = getPackageManager();
         Intent intent = new Intent(Intent.ACTION_MAIN, null);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
@@ -61,7 +63,7 @@ public class AppLockActivity extends Activity {
 				icon = pm.getApplicationIcon(item.activityInfo.packageName);
 			} catch (NameNotFoundException e) {
 				e.printStackTrace();
-				//TODO デフォルトアイコンの設定
+				//nothing to do
 			}
 			data.setDrawable(icon);
 			
@@ -75,11 +77,12 @@ public class AppLockActivity extends Activity {
         listview.setOnItemClickListener(new OnItemClickListener(){
     		@Override
     		public void onItemClick(AdapterView<?> adapter, View view, int pos, long id) {
-
+    			//クリックで起動ロックをONにするかどうかは要検討
     		}
         });
 	}
 	
+	//ロック対象アプリを設定し、サービスを起動
 	private void setListener(){
 		Button btn = (Button)findViewById(R.id.app_lock_ok);
 		btn.setOnClickListener(new OnClickListener(){
@@ -94,11 +97,12 @@ public class AppLockActivity extends Activity {
 		});
 	}
 
+	//SharedPreferenceにロック対象アプリを設定
 	private void saveLockList(){
-		SharedPreferences prefs = getSharedPreferences("LockPref", Context.MODE_PRIVATE);
+		SharedPreferences prefs = getSharedPreferences(PREF_KEY, Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
 
-		//SharedPreferenceクリア
+		//設定済みSharedPreferenceをクリア
 		editor.clear();
 		
 		//保存
@@ -108,7 +112,7 @@ public class AppLockActivity extends Activity {
         for(int i=0,idx=1; i<length; i++){
         	AppData item = adapter.getItem(i);
         	if(item.getLockFlag()){
-        		Log.d(TAG, "lock = " + item.getPackageName());
+        		//Log.d(TAG, "lock = " + item.getPackageName());
         		editor.putString(""+idx, item.getPackageName());
         		idx++;
         	}
