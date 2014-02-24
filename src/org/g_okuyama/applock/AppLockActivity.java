@@ -2,9 +2,13 @@ package org.g_okuyama.applock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,15 +28,46 @@ import android.widget.AdapterView.OnItemClickListener;
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
 	public static final String PREF_KEY = "LockPref";
+	
+    ProgressDialog mProgressDialog = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_app_lock);
 		
-		displayAppList();
+		initProgressDialog();
+		
+    	mProgressDialog.show();
+    	displayAppList();
+        Thread thread = new Thread(runnable);
+        thread.start();
+        
 		setListener();
 	}
+	
+	//プログレスバー初期化
+    void initProgressDialog(){
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setMessage("読込中...");
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        mProgressDialog.setCancelable(false);
+    }
+	
+	//プログレスバー表示用
+    Runnable runnable = new Runnable() {
+        public void run() {
+        	handler.sendMessage(new Message());
+        }
+    };
+    
+    private final Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg)
+        {
+            mProgressDialog.dismiss();
+        };
+    };
 	
 	private void displayAppList(){
 		ArrayList<AppData> appDataList = new ArrayList<AppData>();
@@ -43,9 +78,19 @@ public class AppLockActivity extends Activity {
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         List<ResolveInfo> appInfo = pm.queryIntentActivities(intent, 0);
 
-        for(ResolveInfo item: appInfo){
-			AppData data = new AppData();
+        //ロック対象済みアプリを取得
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_KEY, Context.MODE_PRIVATE);
+		Map map = prefs.getAll();
+
+		for(ResolveInfo item: appInfo){
+			String packageName = item.activityInfo.packageName;
+			//自身はロック対象から外す
+			if(packageName.equals(getPackageName())){
+				continue;
+			}
 			
+			AppData data = new AppData();
+
 			//アプリ名の設定
 			if(item.loadLabel(pm).toString() != null){
 				data.setAppName(item.loadLabel(pm).toString());
@@ -55,19 +100,33 @@ public class AppLockActivity extends Activity {
 			}
 			
 			//パッケージ名の設定
-			data.setPackageName(item.activityInfo.packageName);
+			data.setPackageName(packageName);
 			
 			//アイコンの設定
 			Drawable icon = null;
 			try {
-				icon = pm.getApplicationIcon(item.activityInfo.packageName);
+				icon = pm.getApplicationIcon(packageName);
 			} catch (NameNotFoundException e) {
 				e.printStackTrace();
 				//nothing to do
 			}
 			data.setDrawable(icon);
 			
-			appDataList.add(data);
+			//ロック対象済みアプリはフラグをセット
+			for(int i=1; i<=map.size(); i++){
+				String name = (String)map.get(""+i);
+				if(name.equals(packageName)){
+					data.setLockFlag(true);
+				}
+			}			
+			
+			//ロック対象は前から挿入
+			if(data.getLockFlag()){
+				appDataList.add(0, data);
+			}
+			else{
+				appDataList.add(data);
+			}
         }
 		
         AppArrayAdapter adapter = new AppArrayAdapter(this, android.R.layout.simple_list_item_1, appDataList);
@@ -88,10 +147,10 @@ public class AppLockActivity extends Activity {
 		btn.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View arg0) {
+				//選択されたロック対象を保存
 				saveLockList();
-		        Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-		        startService(intent);
-		        
+
+		        //Activityを終了し画面を閉じる
 		        finish();
 			}
 		});
@@ -109,15 +168,28 @@ public class AppLockActivity extends Activity {
         ListView view = (ListView)findViewById(R.id.app_lock_list);
         AppArrayAdapter adapter = (AppArrayAdapter)view.getAdapter();
         int length = adapter.getCount();
-        for(int i=0,idx=1; i<length; i++){
+        int num = 0;
+        for(int i=0; i<length; i++){
         	AppData item = adapter.getItem(i);
         	if(item.getLockFlag()){
         		//Log.d(TAG, "lock = " + item.getPackageName());
-        		editor.putString(""+idx, item.getPackageName());
-        		idx++;
+        		editor.putString(""+(++num), item.getPackageName());
         	}
         }
         editor.commit();
+
+        if(num == 0){
+        	//Log.d(TAG, "stop service");
+        	//監視用サービス終了
+        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+        	stopService(intent);        	
+        }
+        else{
+        	//Log.d(TAG, "launch service");
+        	//監視用サービスを起動
+        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+        	startService(intent);
+        }
 	}
 
 	@Override

@@ -37,6 +37,9 @@ public class AppArrayAdapter extends ArrayAdapter<AppData> {
         name.setText(data.getAppName());
         
         CheckBox box = (CheckBox)convertView.findViewById(R.id.app_item_check);
+        if(data.getLockFlag()){
+        	box.setChecked(true);
+        }
         box.setOnCheckedChangeListener(new OnCheckedChangeListener(){
 			@Override
 			public void onCheckedChanged(CompoundButton btn, boolean flag) {
