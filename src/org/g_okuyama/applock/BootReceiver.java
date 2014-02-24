@@ -12,7 +12,7 @@ public class BootReceiver extends BroadcastReceiver {
 	
     @Override
     public void onReceive(Context context, Intent intent) {
-		SharedPreferences prefs = context.getSharedPreferences(AppLockActivity.PREF_KEY, Context.MODE_PRIVATE);
+		SharedPreferences prefs = context.getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
 		
 		if(map.size() > 0){

@@ -23,7 +23,7 @@ public class AppWatchService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		mLockList = new ArrayList<String>();
-		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_KEY, Context.MODE_PRIVATE);
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
 		int num = map.size();
 		//Log.d(AppLockActivity.TAG, "num = " + num);

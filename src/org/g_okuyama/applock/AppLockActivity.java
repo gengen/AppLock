@@ -8,26 +8,36 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.text.InputType;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
-	public static final String PREF_KEY = "LockPref";
+	public static final String PREF_LOCK = "LockAppList";
+	public static final String PREF_PASSWORD = "Password";
+	public static final String PASSWORD_FLAG = "flag";
+	public static final String PASSWORD_NUMBER = "pass";	
 	
     ProgressDialog mProgressDialog = null;
 
@@ -35,9 +45,101 @@ public class AppLockActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_app_lock);
-		
+
+		//パスワードが設定されているか？
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
+		boolean flag = prefs.getBoolean(PASSWORD_FLAG, false);
+		inputPassword(flag);			
+	}
+	
+	//パスワード設定
+	private void inputPassword(final boolean flag){
+		//パスワード入力されるまではボタンを無効化
+		Button btn = (Button)findViewById(R.id.app_lock_ok);
+		btn.setVisibility(View.INVISIBLE);
+
+		final EditText editView = new EditText(this);
+		//TODO バージョンチェック
+		editView.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		if(!flag){
+			builder.setTitle("初期パスワードを設定してください");			
+		}
+		else{
+			builder.setTitle("パスワード入力");
+		}
+	    builder.setView(editView)
+	        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	            public void onClick(DialogInterface dialog, int whichButton) {
+            		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
+	            	if(!flag){
+	            		Editor edit = prefs.edit();
+	            		edit.putBoolean(PASSWORD_FLAG, true);
+	            		edit.putString(PASSWORD_NUMBER, editView.getText().toString());
+	            		edit.commit();
+		            	initAppDisplay();
+	            	}
+	            	else{
+		            	//パスワードチェック
+	            		String pass = prefs.getString(PASSWORD_NUMBER, "");
+	            		if(!(editView.getText().toString().equals(pass))){
+	            			//パスワード間違い
+	            			AlertDialog.Builder errorBuilder = new AlertDialog.Builder(AppLockActivity.this);
+	            			errorBuilder.setTitle("エラー")
+								.setMessage("パスワードが違います")
+								.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+										finish();
+									}
+								})
+								.setOnKeyListener(new OnKeyListener() {
+									@Override
+									public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+										//バックキーと検索キーを無効化
+										switch (keyCode) {
+										case KeyEvent.KEYCODE_BACK:
+										case KeyEvent.KEYCODE_SEARCH:
+											return true;
+										default:
+											return false;
+										}
+									}
+								});
+	            			AlertDialog d = errorBuilder.show();
+	            			d.setCanceledOnTouchOutside(false);
+	            		}
+	            		else{
+	    	            	initAppDisplay();
+	            		}
+	            	}
+	            }
+	        })
+	        .setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
+	            public void onClick(DialogInterface dialog, int whichButton) {
+	            	//アプリ終了
+	            	finish();
+	            }
+	        })	    
+	        .setOnKeyListener(new OnKeyListener() {
+	            @Override
+	            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+	                //バックキーと検索キーを無効化
+	                switch (keyCode) {
+	                case KeyEvent.KEYCODE_BACK:
+	                case KeyEvent.KEYCODE_SEARCH:
+	                    return true;
+	                default:
+	                    return false;
+	                }
+	            }
+	        });
+	    AlertDialog dialog = builder.show();
+	    //ダイアログ画面外を押された際に閉じないように設定
+	    dialog.setCanceledOnTouchOutside(false);
+	}
+	
+	void initAppDisplay(){
 		initProgressDialog();
-		
     	mProgressDialog.show();
     	displayAppList();
         Thread thread = new Thread(runnable);
@@ -69,7 +171,7 @@ public class AppLockActivity extends Activity {
         };
     };
 	
-	private void displayAppList(){
+	private void displayAppList(){		
 		ArrayList<AppData> appDataList = new ArrayList<AppData>();
 		
 		//ランチャーから起動できるアプリリストを取得
@@ -79,7 +181,7 @@ public class AppLockActivity extends Activity {
         List<ResolveInfo> appInfo = pm.queryIntentActivities(intent, 0);
 
         //ロック対象済みアプリを取得
-		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_KEY, Context.MODE_PRIVATE);
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
 
 		for(ResolveInfo item: appInfo){
@@ -139,6 +241,10 @@ public class AppLockActivity extends Activity {
     			//クリックで起動ロックをONにするかどうかは要検討
     		}
         });
+        
+		//ボタンを有効化
+		Button btn = (Button)findViewById(R.id.app_lock_ok);
+		btn.setVisibility(View.VISIBLE);
 	}
 	
 	//ロック対象アプリを設定し、サービスを起動
@@ -158,7 +264,7 @@ public class AppLockActivity extends Activity {
 
 	//SharedPreferenceにロック対象アプリを設定
 	private void saveLockList(){
-		SharedPreferences prefs = getSharedPreferences(PREF_KEY, Context.MODE_PRIVATE);
+		SharedPreferences prefs = getSharedPreferences(PREF_LOCK, Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
 
 		//設定済みSharedPreferenceをクリア
