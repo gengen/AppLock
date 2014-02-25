@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -76,95 +77,113 @@ public class AppLockActivity extends Activity {
 		btn.setVisibility(View.INVISIBLE);
 
 		final EditText editView = new EditText(this);
-		//TODO バージョンチェック
-		editView.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		switch(mode){
-			case INIT_LAUNCH:
-				builder.setTitle("初期パスワードを設定してください");			
-				break;
-			case NORMAL_LAUNCH:
-				builder.setTitle("パスワード入力");
-				break;
-			case FROM_NOTIFICATION:
-				builder.setTitle("解除パスワード入力");
-				break;
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+			editView.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
 		}
-		
-	    builder.setView(editView)
-	        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-	            public void onClick(DialogInterface dialog, int whichButton) {
-            		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
-	            	if(mode == INIT_LAUNCH){
-	            		Editor edit = prefs.edit();
-	            		edit.putBoolean(PASSWORD_FLAG, true);
-	            		edit.putString(PASSWORD_NUMBER, editView.getText().toString());
-	            		edit.commit();
-		            	initAppDisplay();
-	            	}
-	            	else{
-		            	//パスワードチェック
-	            		String pass = prefs.getString(PASSWORD_NUMBER, "");
-	            		if(!(editView.getText().toString().equals(pass))){
-	            			//パスワード間違い
-	            			AlertDialog.Builder errorBuilder = new AlertDialog.Builder(AppLockActivity.this);
-	            			errorBuilder.setTitle("エラー")
-								.setMessage("パスワードが違います")
-								.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog, int which) {
-										finish();
-									}
-								})
-								.setOnKeyListener(new OnKeyListener() {
-									@Override
-									public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-										//バックキーと検索キーを無効化
-										switch (keyCode) {
-										case KeyEvent.KEYCODE_BACK:
-										case KeyEvent.KEYCODE_SEARCH:
-											return true;
-										default:
-											return false;
-										}
-									}
-								});
-	            			AlertDialog d = errorBuilder.show();
-	            			d.setCanceledOnTouchOutside(false);
-	            		}
-	            		else{
-	            			//Notificationから起動された場合はロック解除し終了
-	            			if(mode == FROM_NOTIFICATION){
-	            	        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-	            	        	stopService(intent);
-	            	        	finish();
-	            			}
-	    	            	initAppDisplay();
-	            		}
-	            	}
-	            }
-	        })
-	        .setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
-	            public void onClick(DialogInterface dialog, int whichButton) {
-	            	//アプリ終了
-	            	finish();
-	            }
-	        })	    
-	        .setOnKeyListener(new OnKeyListener() {
-	            @Override
-	            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-	                //バックキーと検索キーを無効化
-	                switch (keyCode) {
-	                case KeyEvent.KEYCODE_BACK:
-	                case KeyEvent.KEYCODE_SEARCH:
-	                    return true;
-	                default:
-	                    return false;
-	                }
-	            }
-	        });
+		else{
+			editView.setInputType(InputType.TYPE_CLASS_NUMBER);
+		}
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getTitle(mode));		
+	    builder.setView(editView);
+	    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	    	public void onClick(DialogInterface dialog, int whichButton) {
+	    		//パスワード確認
+	    		String pass = editView.getText().toString();
+	    		checkPassword(pass, mode);
+	    	}
+	    });
+	    builder.setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
+	    	public void onClick(DialogInterface dialog, int whichButton) {
+	    		//アプリ終了
+	    		finish();
+	    	}
+	    });
+	    builder.setOnKeyListener(new OnKeyListener() {
+	    	@Override
+	    	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+	    		//バックキーと検索キーを無効化
+	    		switch (keyCode) {
+	    		case KeyEvent.KEYCODE_BACK:
+	    		case KeyEvent.KEYCODE_SEARCH:
+	    			return true;
+	    		default:
+	    			return false;
+	    		}
+	    	}
+	    });
+
 	    AlertDialog dialog = builder.show();
 	    //ダイアログ画面外を押された際に閉じないように設定
 	    dialog.setCanceledOnTouchOutside(false);
+	}
+	
+	private String getTitle(int mode){
+		String title = "パスワード入力";
+		switch(mode){
+		case INIT_LAUNCH:
+			title = "初期パスワードを設定してください";
+			break;
+		case FROM_NOTIFICATION:
+			title = "解除パスワード入力";
+			break;
+		}
+		
+		return title;
+	}
+	
+	private void checkPassword(String password, int mode){
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
+		
+		//初回起動時はパスワードを保存
+    	if(mode == INIT_LAUNCH){
+    		Editor edit = prefs.edit();
+    		edit.putBoolean(PASSWORD_FLAG, true);
+    		edit.putString(PASSWORD_NUMBER, password);
+    		edit.commit();
+        	initAppDisplay();
+        	return;
+    	}
+
+    	String savePass = prefs.getString(PASSWORD_NUMBER, "");
+    	if(!(password.equals(savePass))){
+    		//パスワード間違い
+    		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
+    		builder.setTitle("エラー");
+    		builder.setMessage("パスワードが違います");
+    		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    			public void onClick(DialogInterface dialog, int which) {
+    				finish();
+    			}
+    		});
+    		builder.setOnKeyListener(new OnKeyListener() {
+    			@Override
+    			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+    				//バックキーと検索キーを無効化
+    				switch (keyCode) {
+    				case KeyEvent.KEYCODE_BACK:
+    				case KeyEvent.KEYCODE_SEARCH:
+    					return true;
+    				default:
+    					return false;
+    				}
+    			}
+    		});
+    		AlertDialog dialog = builder.show();
+    		dialog.setCanceledOnTouchOutside(false);
+    		return;
+    	}
+
+		//パスワードが合っている場合
+    	//Notificationから起動された場合はロック解除し終了
+    	if(mode == FROM_NOTIFICATION){
+    		Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+    		stopService(intent);
+    		finish();
+    		return;
+    	}
+
+    	initAppDisplay();
 	}
 	
 	void initAppDisplay(){

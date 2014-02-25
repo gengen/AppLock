@@ -42,7 +42,7 @@ public class AppWatchService extends Service {
 
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
 		ActivityManager am = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
-		//TODO 引数の"5"は要確認
+		//直近5つ取得
 		List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(5);
 		
 		String top = taskInfo.get(0).topActivity.getPackageName();
@@ -105,6 +105,14 @@ public class AppWatchService extends Service {
 		am.set(type, autoChkTime, pending);
 	}
 	
+	private void stopAlarmManager(){
+		Intent intent = new Intent(this, AppWatchService.class);
+		PendingIntent pending = PendingIntent.getService(
+									this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
+		am.cancel(pending);
+	}
+	
     private void displayNotificationArea(){
         Intent intent = new Intent(getApplicationContext(), AppLockActivity.class);
         intent.putExtra("FromNotification", true);
@@ -118,7 +126,7 @@ public class AppWatchService extends Service {
         builder.setSmallIcon(R.drawable.ic_launcher);
         builder.setContentTitle(getString(R.string.app_name));
         builder.setContentText("ロックモード解除はここをタップ");
-        //builder.setAutoCancel(true);
+        builder.setOngoing(true);
         
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         manager.notify(R.string.app_name, builder.build());
@@ -134,11 +142,7 @@ public class AppWatchService extends Service {
 		super.onDestroy();
 		
         //AlarmManager解除
-		Intent intent = new Intent(this, AppWatchService.class);
-		PendingIntent pending = PendingIntent.getService(
-									this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
-		am.cancel(pending);
+		stopAlarmManager();
 
 		//Notificationを非表示
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
