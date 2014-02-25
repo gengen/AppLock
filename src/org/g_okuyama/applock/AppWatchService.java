@@ -125,7 +125,7 @@ public class AppWatchService extends Service {
         builder.setTicker(getString(R.string.app_name));
         builder.setSmallIcon(R.drawable.ic_launcher);
         builder.setContentTitle(getString(R.string.app_name));
-        builder.setContentText("ロックモード解除はここをタップ");
+        builder.setContentText(getString(R.string.notification_message));
         builder.setOngoing(true);
         
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

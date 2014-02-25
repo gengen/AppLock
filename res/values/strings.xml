@@ -3,6 +3,18 @@
 
     <string name="app_name">AppLock</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
 
+    <string name="dialog_password_title_init">Set initial password</string>
+    <string name="dialog_password_title_normal">Enter password</string>
+    <string name="dialog_password_title_notification">Enter Password</string>    
+    <string name="dialog_password_ok">OK</string>
+    <string name="dialog_password_cancel">Cancel</string>
+    
+    <string name="dialog_error_title">Error</string>
+    <string name="dialog_error_message">Invalid password</string>
+    <string name="dialog_error_ok">OK</string>
+    
+    <string name="dialog_progress_message">Now loading</string>
+    
+    <string name="notification_message">Tap to unlock</string>
 </resources>

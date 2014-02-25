@@ -36,9 +36,13 @@ import android.widget.AdapterView.OnItemClickListener;
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
 	public static final String PREF_LOCK = "LockAppList";
+
 	public static final String PREF_PASSWORD = "Password";
 	public static final String PASSWORD_FLAG = "flag";
 	public static final String PASSWORD_NUMBER = "pass";
+
+	public static final String PREF_MODE = "Mode";
+	public static final String MODE_UNLOCK = "unlock";
 	
 	public static final int INIT_LAUNCH = 1;
 	public static final int NORMAL_LAUNCH = 2;
@@ -86,14 +90,14 @@ public class AppLockActivity extends Activity {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getTitle(mode));		
 	    builder.setView(editView);
-	    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	    builder.setPositiveButton(R.string.dialog_password_ok, new DialogInterface.OnClickListener() {
 	    	public void onClick(DialogInterface dialog, int whichButton) {
 	    		//パスワード確認
 	    		String pass = editView.getText().toString();
 	    		checkPassword(pass, mode);
 	    	}
 	    });
-	    builder.setNegativeButton("キャンセル", new DialogInterface.OnClickListener() {
+	    builder.setNegativeButton(R.string.dialog_password_cancel, new DialogInterface.OnClickListener() {
 	    	public void onClick(DialogInterface dialog, int whichButton) {
 	    		//アプリ終了
 	    		finish();
@@ -119,13 +123,13 @@ public class AppLockActivity extends Activity {
 	}
 	
 	private String getTitle(int mode){
-		String title = "パスワード入力";
+		String title = getString(R.string.dialog_password_title_normal);
 		switch(mode){
 		case INIT_LAUNCH:
-			title = "初期パスワードを設定してください";
+			title = getString(R.string.dialog_password_title_init);
 			break;
 		case FROM_NOTIFICATION:
-			title = "解除パスワード入力";
+			title = getString(R.string.dialog_password_title_notification);
 			break;
 		}
 		
@@ -149,9 +153,9 @@ public class AppLockActivity extends Activity {
     	if(!(password.equals(savePass))){
     		//パスワード間違い
     		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
-    		builder.setTitle("エラー");
-    		builder.setMessage("パスワードが違います");
-    		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    		builder.setTitle(R.string.dialog_error_title);
+    		builder.setMessage(getString(R.string.dialog_error_message));
+    		builder.setPositiveButton(R.string.dialog_error_ok, new DialogInterface.OnClickListener() {
     			public void onClick(DialogInterface dialog, int which) {
     				finish();
     			}
@@ -177,6 +181,12 @@ public class AppLockActivity extends Activity {
 		//パスワードが合っている場合
     	//Notificationから起動された場合はロック解除し終了
     	if(mode == FROM_NOTIFICATION){
+    		//解除フラグをセット
+    		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
+    		SharedPreferences.Editor editor = pref.edit();
+    		editor.putBoolean(MODE_UNLOCK, true);
+    		editor.commit();
+    		
     		Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
     		stopService(intent);
     		finish();
@@ -199,7 +209,7 @@ public class AppLockActivity extends Activity {
 	//プログレスバー初期化
     void initProgressDialog(){
         mProgressDialog = new ProgressDialog(this);
-        mProgressDialog.setMessage("読込中...");
+        mProgressDialog.setMessage(getString(R.string.dialog_progress_message));
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         mProgressDialog.setCancelable(false);
     }
@@ -331,19 +341,34 @@ public class AppLockActivity extends Activity {
         	}
         }
         editor.commit();
-
+        
         if(num == 0){
-        	//Log.d(TAG, "stop service");
-        	//監視用サービス終了
-        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-        	stopService(intent);        	
+        	controlService(false);
         }
         else{
+        	controlService(true);
+        }
+	}
+	
+	private void controlService(boolean flag){
+		if(flag){
         	//Log.d(TAG, "launch service");
         	//監視用サービスを起動
         	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-        	startService(intent);
-        }
+        	startService(intent);        	
+		}
+		else{
+        	//Log.d(TAG, "stop service");
+        	//監視用サービス終了
+        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+        	stopService(intent);			
+		}
+
+		//解除フラグをクリア
+		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = pref.edit();
+		editor.putBoolean(MODE_UNLOCK, false);
+		editor.commit();
 	}
 
 	@Override

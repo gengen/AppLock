@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">起動回避せよ！</string>
+    <string name="action_settings">設定</string>
+
+    <string name="dialog_password_title_init">初期パスワードを設定してください</string>
+    <string name="dialog_password_title_normal">パスワード</string>
+    <string name="dialog_password_title_notification">ロック解除パスワード</string>    
+    <string name="dialog_password_ok">OK</string>
+    <string name="dialog_password_cancel">キャンセル</string>
+    
+    <string name="dialog_error_title">エラー</string>
+    <string name="dialog_error_message">パスワードが違います</string>
+    <string name="dialog_error_ok">OK</string>
+    
+    <string name="dialog_progress_message">読込中</string>
+    
+    <string name="notification_message">ロック解除はここをタップ</string>
+</resources>
