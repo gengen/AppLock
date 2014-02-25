@@ -7,6 +7,7 @@
     <string name="dialog_password_title_init">初期パスワードを設定してください</string>
     <string name="dialog_password_title_normal">パスワード</string>
     <string name="dialog_password_title_notification">ロック解除パスワード</string>    
+    <string name="dialog_password_title_changepass">新パスワード</string>
     <string name="dialog_password_ok">OK</string>
     <string name="dialog_password_cancel">キャンセル</string>
     
@@ -17,4 +18,8 @@
     <string name="dialog_progress_message">読込中</string>
     
     <string name="notification_message">ロック解除はここをタップ</string>
+    
+    <string name="action_clear_all">クリア</string>
+    <string name="action_change_password">パスワード変更</string>
+    <string name="action_help">ヘルプ</string>
 </resources>

@@ -6,7 +6,8 @@
 
     <string name="dialog_password_title_init">Set initial password</string>
     <string name="dialog_password_title_normal">Enter password</string>
-    <string name="dialog_password_title_notification">Enter Password</string>    
+    <string name="dialog_password_title_notification">Enter password</string>
+    <string name="dialog_password_title_changepass">Enter new password</string>
     <string name="dialog_password_ok">OK</string>
     <string name="dialog_password_cancel">Cancel</string>
     
@@ -17,4 +18,8 @@
     <string name="dialog_progress_message">Now loading</string>
     
     <string name="notification_message">Tap to unlock</string>
+    
+    <string name="action_clear_all">Clear</string>
+    <string name="action_change_password">Change password</string>
+    <string name="action_help">Help</string>
 </resources>

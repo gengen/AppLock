@@ -25,6 +25,7 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -47,6 +48,7 @@ public class AppLockActivity extends Activity {
 	public static final int INIT_LAUNCH = 1;
 	public static final int NORMAL_LAUNCH = 2;
 	public static final int FROM_NOTIFICATION = 3;
+	public static final int CHANGE_PASSWORD = 4;
 	
     ProgressDialog mProgressDialog = null;
 
@@ -77,8 +79,10 @@ public class AppLockActivity extends Activity {
 	//パスワード設定
 	private void inputPassword(final int mode){
 		//パスワード入力されるまではボタンを無効化
-		Button btn = (Button)findViewById(R.id.app_lock_ok);
-		btn.setVisibility(View.INVISIBLE);
+		if(mode != CHANGE_PASSWORD){
+			Button btn = (Button)findViewById(R.id.app_lock_ok);
+			btn.setVisibility(View.INVISIBLE);
+		}
 
 		final EditText editView = new EditText(this);
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
@@ -99,8 +103,10 @@ public class AppLockActivity extends Activity {
 	    });
 	    builder.setNegativeButton(R.string.dialog_password_cancel, new DialogInterface.OnClickListener() {
 	    	public void onClick(DialogInterface dialog, int whichButton) {
-	    		//アプリ終了
-	    		finish();
+	    		if(mode != CHANGE_PASSWORD){
+	    			//アプリ終了
+	    			finish();
+	    		}
 	    	}
 	    });
 	    builder.setOnKeyListener(new OnKeyListener() {
@@ -131,6 +137,9 @@ public class AppLockActivity extends Activity {
 		case FROM_NOTIFICATION:
 			title = getString(R.string.dialog_password_title_notification);
 			break;
+		case CHANGE_PASSWORD:
+			title = getString(R.string.dialog_password_title_changepass);
+			break;			
 		}
 		
 		return title;
@@ -140,7 +149,7 @@ public class AppLockActivity extends Activity {
 		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
 		
 		//初回起動時はパスワードを保存
-    	if(mode == INIT_LAUNCH){
+    	if(mode == INIT_LAUNCH || mode == CHANGE_PASSWORD){
     		Editor edit = prefs.edit();
     		edit.putBoolean(PASSWORD_FLAG, true);
     		edit.putString(PASSWORD_NUMBER, password);
@@ -377,4 +386,42 @@ public class AppLockActivity extends Activity {
 		getMenuInflater().inflate(R.menu.app_lock, menu);
 		return true;
 	}
+	
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	// Handle presses on the action bar items
+    	switch (item.getItemId()) {
+    	/*
+    	case R.id.action_clear_all:
+    		clear();
+    		return true;
+    		*/
+    		
+    	case R.id.action_change_password:
+    		changePassword();
+    		return true;
+    		
+    		/*
+    	case R.id.action_help:
+    		help();
+    		return true;
+    		*/
+    		
+    	default:
+    		return super.onOptionsItemSelected(item);
+    	}
+    }
+    
+    private void clear(){
+    	//ロックリストクリア
+    }
+    
+    private void changePassword(){
+    	//パスワード変更
+    	inputPassword(CHANGE_PASSWORD);
+    }
+    
+    private void help(){
+    	//ヘルプ表示
+    }
 }
