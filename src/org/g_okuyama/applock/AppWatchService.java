@@ -6,6 +6,7 @@ import java.util.Map;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -15,10 +16,16 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class AppWatchService extends Service {
 	static ArrayList<String> mLockList;
+	
+	@Override
+	public void onCreate(){
+		displayNotificationArea();
+	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -98,8 +105,43 @@ public class AppWatchService extends Service {
 		am.set(type, autoChkTime, pending);
 	}
 	
+    private void displayNotificationArea(){
+        Intent intent = new Intent(getApplicationContext(), AppLockActivity.class);
+        intent.putExtra("FromNotification", true);
+        PendingIntent contentIntent = PendingIntent.getActivity(
+        		getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                getApplicationContext());
+        builder.setContentIntent(contentIntent);
+        builder.setTicker(getString(R.string.app_name));
+        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setContentTitle(getString(R.string.app_name));
+        builder.setContentText("ロックモード解除はここをタップ");
+        //builder.setAutoCancel(true);
+        
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        manager.notify(R.string.app_name, builder.build());
+    }
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return null;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		
+        //AlarmManager解除
+		Intent intent = new Intent(this, AppWatchService.class);
+		PendingIntent pending = PendingIntent.getService(
+									this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
+		am.cancel(pending);
+
+		//Notificationを非表示
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        manager.cancel(R.string.app_name);        
 	}
 }

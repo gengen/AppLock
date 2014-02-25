@@ -37,7 +37,11 @@ public class AppLockActivity extends Activity {
 	public static final String PREF_LOCK = "LockAppList";
 	public static final String PREF_PASSWORD = "Password";
 	public static final String PASSWORD_FLAG = "flag";
-	public static final String PASSWORD_NUMBER = "pass";	
+	public static final String PASSWORD_NUMBER = "pass";
+	
+	public static final int INIT_LAUNCH = 1;
+	public static final int NORMAL_LAUNCH = 2;
+	public static final int FROM_NOTIFICATION = 3;
 	
     ProgressDialog mProgressDialog = null;
 
@@ -45,15 +49,28 @@ public class AppLockActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_app_lock);
-
+		
+		int mode = INIT_LAUNCH;
 		//パスワードが設定されているか？
 		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
 		boolean flag = prefs.getBoolean(PASSWORD_FLAG, false);
-		inputPassword(flag);			
+		if(flag){
+			mode = NORMAL_LAUNCH;
+		}
+
+		Bundle extras = getIntent().getExtras();
+		if(extras != null){
+			boolean isNotification = extras.getBoolean("FromNotification");
+			if(isNotification){
+				mode = FROM_NOTIFICATION;
+			}
+		}
+
+		inputPassword(mode);
 	}
 	
 	//パスワード設定
-	private void inputPassword(final boolean flag){
+	private void inputPassword(final int mode){
 		//パスワード入力されるまではボタンを無効化
 		Button btn = (Button)findViewById(R.id.app_lock_ok);
 		btn.setVisibility(View.INVISIBLE);
@@ -62,17 +79,23 @@ public class AppLockActivity extends Activity {
 		//TODO バージョンチェック
 		editView.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		if(!flag){
-			builder.setTitle("初期パスワードを設定してください");			
+		switch(mode){
+			case INIT_LAUNCH:
+				builder.setTitle("初期パスワードを設定してください");			
+				break;
+			case NORMAL_LAUNCH:
+				builder.setTitle("パスワード入力");
+				break;
+			case FROM_NOTIFICATION:
+				builder.setTitle("解除パスワード入力");
+				break;
 		}
-		else{
-			builder.setTitle("パスワード入力");
-		}
+		
 	    builder.setView(editView)
 	        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
 	            public void onClick(DialogInterface dialog, int whichButton) {
             		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
-	            	if(!flag){
+	            	if(mode == INIT_LAUNCH){
 	            		Editor edit = prefs.edit();
 	            		edit.putBoolean(PASSWORD_FLAG, true);
 	            		edit.putString(PASSWORD_NUMBER, editView.getText().toString());
@@ -109,6 +132,12 @@ public class AppLockActivity extends Activity {
 	            			d.setCanceledOnTouchOutside(false);
 	            		}
 	            		else{
+	            			//Notificationから起動された場合はロック解除し終了
+	            			if(mode == FROM_NOTIFICATION){
+	            	        	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+	            	        	stopService(intent);
+	            	        	finish();
+	            			}
 	    	            	initAppDisplay();
 	            		}
 	            	}
