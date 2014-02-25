@@ -56,6 +56,7 @@ public class AppLockActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_app_lock);
+		setTitle(getString(R.string.title));
 		
 		int mode = INIT_LAUNCH;
 		//パスワードが設定されているか？
@@ -150,6 +151,11 @@ public class AppLockActivity extends Activity {
 		
 		//初回起動時はパスワードを保存
     	if(mode == INIT_LAUNCH || mode == CHANGE_PASSWORD){
+    		//パスワードが0文字
+    		if(password.length() == 0){
+    			displayPasswordErrorDialog(mode);
+    			return;
+    		}
     		Editor edit = prefs.edit();
     		edit.putBoolean(PASSWORD_FLAG, true);
     		edit.putString(PASSWORD_NUMBER, password);
@@ -161,29 +167,7 @@ public class AppLockActivity extends Activity {
     	String savePass = prefs.getString(PASSWORD_NUMBER, "");
     	if(!(password.equals(savePass))){
     		//パスワード間違い
-    		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
-    		builder.setTitle(R.string.dialog_error_title);
-    		builder.setMessage(getString(R.string.dialog_error_message));
-    		builder.setPositiveButton(R.string.dialog_error_ok, new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int which) {
-    				finish();
-    			}
-    		});
-    		builder.setOnKeyListener(new OnKeyListener() {
-    			@Override
-    			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-    				//バックキーと検索キーを無効化
-    				switch (keyCode) {
-    				case KeyEvent.KEYCODE_BACK:
-    				case KeyEvent.KEYCODE_SEARCH:
-    					return true;
-    				default:
-    					return false;
-    				}
-    			}
-    		});
-    		AlertDialog dialog = builder.show();
-    		dialog.setCanceledOnTouchOutside(false);
+    		displayPasswordInvalidDialog();
     		return;
     	}
 
@@ -203,6 +187,60 @@ public class AppLockActivity extends Activity {
     	}
 
     	initAppDisplay();
+	}
+	
+	//パスワード0文字入力用
+	private void displayPasswordErrorDialog(final int mode){
+		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
+		builder.setTitle(R.string.dialog_error_title);
+		builder.setMessage(getString(R.string.dialog_error_password_message));
+		builder.setPositiveButton(R.string.dialog_error_ok, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				inputPassword(mode);
+			}
+		});
+		builder.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+				//バックキーと検索キーを無効化
+				switch (keyCode) {
+				case KeyEvent.KEYCODE_BACK:
+				case KeyEvent.KEYCODE_SEARCH:
+					return true;
+				default:
+					return false;
+				}
+			}
+		});
+		AlertDialog dialog = builder.show();
+		dialog.setCanceledOnTouchOutside(false);
+	}
+	
+	private void displayPasswordInvalidDialog(){
+		//パスワード間違い
+		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
+		builder.setTitle(R.string.dialog_error_title);
+		builder.setMessage(getString(R.string.dialog_error_message));
+		builder.setPositiveButton(R.string.dialog_error_ok, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				finish();
+			}
+		});
+		builder.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+				//バックキーと検索キーを無効化
+				switch (keyCode) {
+				case KeyEvent.KEYCODE_BACK:
+				case KeyEvent.KEYCODE_SEARCH:
+					return true;
+				default:
+					return false;
+				}
+			}
+		});
+		AlertDialog dialog = builder.show();
+		dialog.setCanceledOnTouchOutside(false);
 	}
 	
 	void initAppDisplay(){

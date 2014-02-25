@@ -123,7 +123,7 @@ public class AppWatchService extends Service {
                 getApplicationContext());
         builder.setContentIntent(contentIntent);
         builder.setTicker(getString(R.string.app_name));
-        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_lock_lock);
         builder.setContentTitle(getString(R.string.app_name));
         builder.setContentText(getString(R.string.notification_message));
         builder.setOngoing(true);

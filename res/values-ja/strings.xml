@@ -2,7 +2,8 @@
 <resources>
 
     <string name="app_name">起動回避せよ！</string>
-    <string name="action_settings">設定</string>
+    <string name="title">ロックするアプリを選択</string>
+    <string name="button_set">設定</string>
 
     <string name="dialog_password_title_init">初期パスワードを設定してください</string>
     <string name="dialog_password_title_normal">パスワード</string>
@@ -13,6 +14,7 @@
     
     <string name="dialog_error_title">エラー</string>
     <string name="dialog_error_message">パスワードが違います</string>
+    <string name="dialog_error_password_message">1文字以上入力してください</string>
     <string name="dialog_error_ok">OK</string>
     
     <string name="dialog_progress_message">読込中</string>

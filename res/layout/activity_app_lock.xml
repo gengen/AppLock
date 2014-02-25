@@ -24,14 +24,18 @@
     <FrameLayout 
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
+          android:orientation="vertical"
           android:layout_gravity="bottom">
 
         <Button 
         	android:id="@+id/app_lock_ok"
 	        android:layout_width="match_parent"
     	    android:layout_height="wrap_content"
-        	android:text="ok"
-        	android:layout_gravity="bottom"/>
+        	android:text="@string/button_set"
+        	android:background="@drawable/my_button"
+	   	    android:drawableLeft="@drawable/ic_menu_account_list"
+       		android:textColor="#ffffff"
+       		android:layout_gravity="center"/>
 	</FrameLayout>    
 
 </LinearLayout>
