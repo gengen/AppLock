@@ -47,6 +47,7 @@
         		android:gravity="center"/>            
         </LinearLayout>
 
+        <!-- 
         <Button 
         	android:id="@+id/app_lock_ok"
 	        android:layout_width="match_parent"
@@ -55,6 +56,7 @@
         	android:background="@drawable/my_button"
        		android:textColor="#ffffff"
        		android:layout_gravity="center"/>
+       		 -->
 	
     	<FrameLayout 
         	android:layout_width="match_parent"

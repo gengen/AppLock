@@ -30,7 +30,6 @@
         
         <service 
             android:name="org.neging.applock.AppWatchService"/>
-        
         <receiver
             android:name="org.neging.applock.BootReceiver"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED" >

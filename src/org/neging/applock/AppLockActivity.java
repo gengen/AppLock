@@ -11,10 +11,12 @@ import android.os.Message;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
@@ -85,6 +87,9 @@ public class AppLockActivity extends Activity {
     @Override
     protected void onPause(){
     	super.onPause();
+    	
+    	//アプリ表示時にNotificationから解除すると2回passを入れないといけないためここでfinishする
+		finish();
     }
     
     @Override
@@ -146,6 +151,7 @@ public class AppLockActivity extends Activity {
 	    		if(mode != CHANGE_PASSWORD){
 	    			//アプリ終了
 	    			finish();
+	    			return;
 	    		}
 	    	}
 	    });
@@ -213,21 +219,24 @@ public class AppLockActivity extends Activity {
 		//パスワードが合っている場合
     	//Notificationから起動された場合はロック解除し終了
     	if(mode == FROM_NOTIFICATION){
-    		//解除フラグをセット
-    		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
-    		SharedPreferences.Editor editor = pref.edit();
-    		editor.putBoolean(MODE_UNLOCK, true);
-    		editor.commit();
-    		
-    		Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-    		stopService(intent);    		
+    		disableLock();
         	Toast.makeText(this, getString(R.string.toast_unlock), Toast.LENGTH_SHORT).show();
-
     		finish();
     		return;
     	}
 
     	initAppDisplay();
+	}
+	
+	private void disableLock(){
+		//解除フラグをセット
+		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = pref.edit();
+		editor.putBoolean(MODE_UNLOCK, true);
+		editor.commit();
+		
+		Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+		stopService(intent);
 	}
 	
 	//パスワード文字数入力エラー用
@@ -265,6 +274,7 @@ public class AppLockActivity extends Activity {
 		builder.setPositiveButton(R.string.dialog_error_ok, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				finish();
+				return;
 			}
 		});
 		builder.setOnKeyListener(new OnKeyListener() {
@@ -406,6 +416,7 @@ public class AppLockActivity extends Activity {
 	}
 	
 	private void setListener(){
+		/*
 		Button btn = (Button)findViewById(R.id.app_lock_ok);
 		btn.setOnClickListener(new OnClickListener(){
 			@Override
@@ -417,6 +428,7 @@ public class AppLockActivity extends Activity {
 		        //finish();
 			}
 		});
+		*/
 		
 		//有効化/無効化でビューを変える
 		CheckBox checkbox = (CheckBox)findViewById(R.id.unlock_flag);
@@ -429,10 +441,12 @@ public class AppLockActivity extends Activity {
 				if(isChecked){
 					layout.addView(mView);
 					listview.setEnabled(false);
+					disableLock();
 				}
 				else{
 					layout.removeView(mView);
 					listview.setEnabled(true);
+					controlLock();
 				}
 			}
 		});
@@ -468,6 +482,10 @@ public class AppLockActivity extends Activity {
         }
 	}
 	
+	public void controlLock(){
+		saveLockList();
+	}
+	
 	private void controlService(boolean flag){
 		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = pref.edit();
@@ -488,7 +506,7 @@ public class AppLockActivity extends Activity {
         	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
         	startService(intent);
         	
-        	Toast.makeText(this, getString(R.string.toast_lock), Toast.LENGTH_SHORT).show();
+        	//Toast.makeText(this, getString(R.string.toast_lock), Toast.LENGTH_SHORT).show();
 		}
 		else{
         	//Log.d(TAG, "stop service");

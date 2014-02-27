@@ -46,6 +46,7 @@ public class AppArrayAdapter extends ArrayAdapter<AppData> {
 			@Override
 			public void onCheckedChanged(CompoundButton btn, boolean flag) {
 				data.setLockFlag(flag);
+				((AppLockActivity)mContext).controlLock();
 			}
         });
 
