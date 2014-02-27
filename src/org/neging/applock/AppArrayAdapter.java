@@ -1,8 +1,10 @@
-package org.g_okuyama.applock;
+package org.neging.applock;
 
 import java.util.List;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,11 +18,11 @@ import android.widget.TextView;
 public class AppArrayAdapter extends ArrayAdapter<AppData> {
     private LayoutInflater mInflater;
     Context mContext;
-
+    
     public AppArrayAdapter(Context context, int textViewResourceId, List<AppData> objects) {
         super(context, textViewResourceId, objects);
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mContext = context;
+        mContext = context;        
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {

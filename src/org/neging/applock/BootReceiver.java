@@ -1,4 +1,4 @@
-package org.g_okuyama.applock;
+package org.neging.applock;
 
 import java.util.Map;
 

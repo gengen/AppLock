@@ -1,4 +1,4 @@
-package org.g_okuyama.applock;
+package org.neging.applock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +20,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.InputType;
 import android.util.Log;
@@ -30,9 +31,15 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Toast;
 
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
@@ -51,13 +58,38 @@ public class AppLockActivity extends Activity {
 	public static final int CHANGE_PASSWORD = 4;
 	
     ProgressDialog mProgressDialog = null;
-
+    View mView;
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_app_lock);
-		setTitle(getString(R.string.title));
 		
+		//Notificationからの起動はロック解除画面だけ表示するため透過にする
+		Bundle extras = getIntent().getExtras();
+		if(extras != null){
+			boolean isNotification = extras.getBoolean("FromNotification");
+			if(isNotification){
+				setTheme(android.R.style.Theme_Translucent_NoTitleBar);
+			}
+		}
+		
+		setContentView(R.layout.activity_app_lock);
+		
+		//有効/無効化時に張り付けるためのView
+        mView = new View(AppLockActivity.this);
+        mView.setBackgroundColor(Color.argb(200, 211, 211, 211));
+	}
+	
+    @Override
+    protected void onPause(){
+    	super.onPause();
+    }
+    
+    @Override
+    protected void onResume(){
+        super.onResume();
+        
+		setTitle(getString(R.string.title));
 		int mode = INIT_LAUNCH;
 		//パスワードが設定されているか？
 		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
@@ -75,14 +107,14 @@ public class AppLockActivity extends Activity {
 		}
 
 		inputPassword(mode);
-	}
+    }
 	
 	//パスワード設定
 	private void inputPassword(final int mode){
-		//パスワード入力されるまではボタンを無効化
+		//パスワード入力されるまではレイアウトを無効化
 		if(mode != CHANGE_PASSWORD){
-			Button btn = (Button)findViewById(R.id.app_lock_ok);
-			btn.setVisibility(View.INVISIBLE);
+			LinearLayout layout = (LinearLayout)findViewById(R.id.bottom_layout);
+			layout.setVisibility(View.INVISIBLE);
 		}
 
 		final EditText editView = new EditText(this);
@@ -151,8 +183,8 @@ public class AppLockActivity extends Activity {
 		
 		//初回起動時はパスワードを保存
     	if(mode == INIT_LAUNCH || mode == CHANGE_PASSWORD){
-    		//パスワードが0文字
-    		if(password.length() == 0){
+    		//パスワードが1-8文字の間でないとき
+    		if((password.length() == 0) || (password.length() > 8)){
     			displayPasswordErrorDialog(mode);
     			return;
     		}
@@ -181,7 +213,9 @@ public class AppLockActivity extends Activity {
     		editor.commit();
     		
     		Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-    		stopService(intent);
+    		stopService(intent);    		
+        	Toast.makeText(this, getString(R.string.toast_unlock), Toast.LENGTH_SHORT).show();
+
     		finish();
     		return;
     	}
@@ -189,7 +223,7 @@ public class AppLockActivity extends Activity {
     	initAppDisplay();
 	}
 	
-	//パスワード0文字入力用
+	//パスワード文字数入力エラー用
 	private void displayPasswordErrorDialog(final int mode){
 		AlertDialog.Builder builder = new AlertDialog.Builder(AppLockActivity.this);
 		builder.setTitle(R.string.dialog_error_title);
@@ -347,12 +381,23 @@ public class AppLockActivity extends Activity {
     		}
         });
         
-		//ボタンを有効化
-		Button btn = (Button)findViewById(R.id.app_lock_ok);
-		btn.setVisibility(View.VISIBLE);
+		//レイアウトを有効化
+		LinearLayout layout = (LinearLayout)findViewById(R.id.bottom_layout);
+		layout.setVisibility(View.VISIBLE);
+		
+		//ロック解除設定されている場合は、チェックボックスをtrueにする
+		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
+		boolean isUnlock = pref.getBoolean(AppLockActivity.MODE_UNLOCK, false);
+		if(isUnlock){
+			CheckBox checkbox = (CheckBox)findViewById(R.id.unlock_flag);
+			checkbox.setChecked(true);
+			
+			FrameLayout framelayout = (FrameLayout)findViewById(R.id.main_layout);
+			framelayout.addView(mView);
+			listview.setEnabled(false);
+		}		
 	}
 	
-	//ロック対象アプリを設定し、サービスを起動
 	private void setListener(){
 		Button btn = (Button)findViewById(R.id.app_lock_ok);
 		btn.setOnClickListener(new OnClickListener(){
@@ -362,7 +407,26 @@ public class AppLockActivity extends Activity {
 				saveLockList();
 
 		        //Activityを終了し画面を閉じる
-		        finish();
+		        //finish();
+			}
+		});
+		
+		//有効化/無効化でビューを変える
+		CheckBox checkbox = (CheckBox)findViewById(R.id.unlock_flag);
+		checkbox.setOnCheckedChangeListener(new OnCheckedChangeListener(){
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				FrameLayout layout = (FrameLayout)findViewById(R.id.main_layout);
+		        ListView listview = (ListView)findViewById(R.id.app_lock_list);
+
+				if(isChecked){
+					layout.addView(mView);
+					listview.setEnabled(false);
+				}
+				else{
+					layout.removeView(mView);
+					listview.setEnabled(true);
+				}
 			}
 		});
 	}
@@ -398,24 +462,33 @@ public class AppLockActivity extends Activity {
 	}
 	
 	private void controlService(boolean flag){
+		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = pref.edit();
+		CheckBox checkbox = (CheckBox)findViewById(R.id.unlock_flag);
+		if(checkbox.isChecked()){
+			editor.putBoolean(MODE_UNLOCK, true);
+			//ロック解除フラグがたっている場合はサービスを起動しないためflagをfalseに設定しなおす
+			flag = false;
+		}
+		else{
+			editor.putBoolean(MODE_UNLOCK, false);
+		}
+		editor.commit();
+
 		if(flag){
         	//Log.d(TAG, "launch service");
         	//監視用サービスを起動
         	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-        	startService(intent);        	
+        	startService(intent);
+        	
+        	Toast.makeText(this, getString(R.string.toast_lock), Toast.LENGTH_SHORT).show();
 		}
 		else{
         	//Log.d(TAG, "stop service");
         	//監視用サービス終了
         	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-        	stopService(intent);			
+        	stopService(intent);
 		}
-
-		//解除フラグをクリア
-		SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
-		SharedPreferences.Editor editor = pref.edit();
-		editor.putBoolean(MODE_UNLOCK, false);
-		editor.commit();
 	}
 
 	@Override

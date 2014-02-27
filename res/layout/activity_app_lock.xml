@@ -10,6 +10,7 @@
     tools:context=".AppLockActivity" >
 
     <FrameLayout 
+        android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="0pt"
         android:layout_weight="1">
@@ -21,11 +22,30 @@
     
     </FrameLayout>
 
-    <FrameLayout 
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:orientation="vertical"
-          android:layout_gravity="bottom">
+    <LinearLayout 
+        android:id="@+id/bottom_layout"
+	    android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom">
+	    
+        <LinearLayout
+	        android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:orientation="horizontal"
+    	    android:padding="10sp">
+            
+            <CheckBox
+	    	    android:id="@+id/unlock_flag"
+    	    	android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"/>
+            
+	        <TextView
+    	    	android:layout_width="wrap_content"
+        		android:layout_height="wrap_content"
+        		android:text="@string/check_unlock"
+        		android:gravity="center"/>            
+        </LinearLayout>
 
         <Button 
         	android:id="@+id/app_lock_ok"
@@ -33,9 +53,29 @@
     	    android:layout_height="wrap_content"
         	android:text="@string/button_set"
         	android:background="@drawable/my_button"
-	   	    android:drawableLeft="@drawable/ic_menu_account_list"
        		android:textColor="#ffffff"
        		android:layout_gravity="center"/>
-	</FrameLayout>    
+	
+    	<FrameLayout 
+        	android:layout_width="match_parent"
+          	android:layout_height="50sp">
+          
+        	<TextView
+        		android:layout_width="match_parent"
+	        	android:layout_height="match_parent"
+    	    	android:text="ad"
+        		android:gravity="center"/>
+            
 
+        <!-- 
+        <com.ad_stir.webview.AdstirWebView  
+	  		media="MEDIA-120b98d5"
+  			spot="1"
+  			refresh_interval="20"
+	  		android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"/>
+  			 -->
+    	</FrameLayout>
+
+	</LinearLayout>
 </LinearLayout>

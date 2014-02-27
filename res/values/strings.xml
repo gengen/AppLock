@@ -4,6 +4,7 @@
     <string name="app_name">AppLock</string>
     <string name="title">Select lock application</string>
     <string name="button_set">Set</string>
+    <string name="check_unlock">Disable lock</string>
     
     <string name="dialog_password_title_init">Set initial password</string>
     <string name="dialog_password_title_normal">Enter password</string>
@@ -14,10 +15,13 @@
     
     <string name="dialog_error_title">Error</string>
     <string name="dialog_error_message">Invalid password</string>
-    <string name="dialog_error_password_message">Please input at least one number</string>
+    <string name="dialog_error_password_message">Please input from 1 to 8 number</string>
     <string name="dialog_error_ok">OK</string>    
     
     <string name="dialog_progress_message">Now loading</string>
+    
+    <string name="toast_lock">Locked</string>
+    <string name="toast_unlock">Unlocked</string>
     
     <string name="notification_message">Tap to unlock</string>
     
