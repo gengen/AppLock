@@ -52,6 +52,8 @@ public class AppLockActivity extends Activity {
 	public static final String PREF_MODE = "Mode";
 	public static final String MODE_UNLOCK = "unlock";
 	
+	public static final String SERVICE_PENDING = "pending";	
+	
 	public static final int INIT_LAUNCH = 1;
 	public static final int NORMAL_LAUNCH = 2;
 	public static final int FROM_NOTIFICATION = 3;
@@ -88,6 +90,11 @@ public class AppLockActivity extends Activity {
     @Override
     protected void onResume(){
         super.onResume();
+        
+        //タイミングによってロック解除されないことがあるため、いったんサービス側のアラームマネージャを止める
+    	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+    	intent.putExtra(SERVICE_PENDING, true);
+    	startService(intent);
         
 		setTitle(getString(R.string.title));
 		int mode = INIT_LAUNCH;

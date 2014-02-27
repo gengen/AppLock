@@ -15,31 +15,48 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class AppWatchService extends Service {
 	static ArrayList<String> mLockList;
+	boolean mInit = true;
 	
 	@Override
 	public void onCreate(){
-		displayNotificationArea();
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		mLockList = new ArrayList<String>();
-		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
-		Map map = prefs.getAll();
-		int num = map.size();
-		//Log.d(AppLockActivity.TAG, "num = " + num);
-		for(int i=1; i<=num; i++){
-			String name = (String)map.get(""+i);
-			mLockList.add(name);
-			//Log.d(AppLockActivity.TAG, "name = " + name);
+		if(intent != null){
+			Bundle extras = intent.getExtras();
+			if(extras != null){
+				boolean isPending = extras.getBoolean(AppLockActivity.SERVICE_PENDING);
+				if(isPending){
+					stopAlarmManager();
+					return;
+				}
+			}
 		}
+		
+		if(mInit){
+			displayNotificationArea();
 
+			mLockList = new ArrayList<String>();
+			SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
+			Map map = prefs.getAll();
+			int num = map.size();
+			//Log.d(AppLockActivity.TAG, "num = " + num);
+			for(int i=1; i<=num; i++){
+				String name = (String)map.get(""+i);
+				mLockList.add(name);
+				//Log.d(AppLockActivity.TAG, "name = " + name);
+			}
+		}
+		mInit = false;
+		
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
 		ActivityManager am = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
 		//直近5つ取得
