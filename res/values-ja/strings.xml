@@ -6,6 +6,10 @@
     <string name="button_set">設定</string>
     <string name="check_unlock">ロック設定を無効にする</string>
     
+    <string name="app_finish_title">アプリを終了しますか？</string>
+    <string name="app_finish_ok">OK</string>
+    <string name="app_finish_cancel">Cancel</string>
+    
     <string name="dialog_password_title_init">初期パスワードを設定してください</string>
     <string name="dialog_password_title_normal">パスワード</string>
     <string name="dialog_password_title_notification">ロック解除パスワード</string>    

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.ad_stir.interstitial.AdstirInterstitial.AdstirInterstitialDialogListener;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,12 +13,10 @@ import android.os.Message;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
@@ -30,9 +30,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -64,6 +62,12 @@ public class AppLockActivity extends Activity {
     ProgressDialog mProgressDialog = null;
     View mView;
     
+    //バックボタンが押されたかどうかのフラグ。onPausedにて使用する。
+    boolean mBackPressedFlag = false;
+    
+    //ad
+    com.ad_stir.interstitial.AdstirInterstitial mInterstitial;
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -82,19 +86,30 @@ public class AppLockActivity extends Activity {
 		//有効/無効化時に張り付けるためのView
         mView = new View(AppLockActivity.this);
         mView.setBackgroundColor(Color.argb(200, 211, 211, 211));
+        
+    	mInterstitial = new com.ad_stir.interstitial.AdstirInterstitial("MEDIA-fa4e1fee",2);
+    	mInterstitial.load();
 	}
 	
     @Override
     protected void onPause(){
     	super.onPause();
     	
-    	//アプリ表示時にNotificationから解除すると2回passを入れないといけないためここでfinishする
-		finish();
+    	if(!mBackPressedFlag){
+    		//アプリ表示時にNotificationから解除すると2回passを入れないといけないためここでfinishする
+    		finish();
+    	}
     }
     
     @Override
     protected void onResume(){
         super.onResume();
+        
+        //広告表示からの復帰時にパスワードが出ないように設定
+        if(mBackPressedFlag){
+        	mBackPressedFlag = false;
+        	return;
+        }
         
         //タイミングによってロック解除されないことがあるため、いったんサービス側のアラームマネージャを止める
     	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
@@ -559,5 +574,32 @@ public class AppLockActivity extends Activity {
     
     private void help(){
     	//ヘルプ表示
+    }
+    
+    @Override
+    public void onBackPressed(){
+    	mBackPressedFlag = true;
+    	
+    	//インタースティシャル広告表示(OKでアプリ終了)
+    	//mInterstitial.showInterstitial(this);
+    	mInterstitial.setDialogText(getString(R.string.app_finish_title));
+    	mInterstitial.setPositiveButtonText(getString(R.string.app_finish_ok));
+    	mInterstitial.setNegativeButtonText(getString(R.string.app_finish_cancel));
+    	mInterstitial.setDialoglistener(new AdstirInterstitialDialogListener(){
+			@Override
+			public void onCancel() {
+			}
+
+			@Override
+			public void onNegativeButtonClick() {
+				return;
+			}
+
+			@Override
+			public void onPositiveButtonClick() {
+				finish();
+			}
+    	});
+    	mInterstitial.showDialog(this);
     }
 }

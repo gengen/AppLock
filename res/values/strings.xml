@@ -6,6 +6,10 @@
     <string name="button_set">Set</string>
     <string name="check_unlock">Disable lock</string>
     
+    <string name="app_finish_title">Close Application?</string>
+    <string name="app_finish_ok">Close</string>
+    <string name="app_finish_calcel">Cancel</string>
+    
     <string name="dialog_password_title_init">Set initial password</string>
     <string name="dialog_password_title_normal">Enter password</string>
     <string name="dialog_password_title_notification">Enter password</string>

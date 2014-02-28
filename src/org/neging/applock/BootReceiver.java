@@ -11,7 +11,6 @@ import android.util.Log;
 public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-    	Log.d(AppLockActivity.TAG, "start service");
     	//ロック対象が設定されているか？
 		SharedPreferences prefs = context.getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
@@ -19,15 +18,7 @@ public class BootReceiver extends BroadcastReceiver {
 			return;
 		}
 		
-		//電源ON時は必ずロックする
-		/*
-		//ロック解除中でないか？
-		SharedPreferences modePref = context.getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
-		boolean isUnlock = modePref.getBoolean(AppLockActivity.MODE_UNLOCK, false);
-		if(isUnlock){
-			return;
-		}
-		*/
+		//電源ON時およびスリープからの復帰時(スライドロックなど何かしらの端末ロックが外されたとき)は必ずロックする
 		SharedPreferences modePref = context.getSharedPreferences(AppLockActivity.PREF_MODE, Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = modePref.edit();
 		editor.putBoolean(AppLockActivity.MODE_UNLOCK, false);

@@ -9,8 +9,10 @@ import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -23,7 +25,7 @@ import android.util.Log;
 public class AppWatchService extends Service {
 	static ArrayList<String> mLockList;
 	boolean mInit = true;
-	
+
 	@Override
 	public void onCreate(){
 	}
@@ -163,6 +165,6 @@ public class AppWatchService extends Service {
 
 		//Notificationを非表示
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.cancel(R.string.app_name);        
+        manager.cancel(R.string.app_name);   
 	}
 }
