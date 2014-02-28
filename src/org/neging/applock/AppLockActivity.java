@@ -30,6 +30,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -74,14 +75,23 @@ public class AppLockActivity extends Activity {
 		
 		//Notificationからの起動はロック解除画面だけ表示するため透過にする
 		Bundle extras = getIntent().getExtras();
+		boolean isNotification = false;
 		if(extras != null){
-			boolean isNotification = extras.getBoolean("FromNotification");
+			isNotification = extras.getBoolean("FromNotification");
 			if(isNotification){
-				setTheme(android.R.style.Theme_Translucent_NoTitleBar);
+		        requestWindowFeature(Window.FEATURE_NO_TITLE);
 			}
 		}
-		
+
 		setContentView(R.layout.activity_app_lock);
+		
+		if(isNotification){
+			FrameLayout frame = (FrameLayout)findViewById(R.id.main_layout);
+			frame.setVisibility(View.INVISIBLE);
+
+			LinearLayout layout = (LinearLayout)findViewById(R.id.bottom_layout);
+			layout.setVisibility(View.INVISIBLE);
+		}
 		
 		//有効/無効化時に張り付けるためのView
         mView = new View(AppLockActivity.this);
@@ -361,7 +371,11 @@ public class AppLockActivity extends Activity {
 			if(packageName.equals(getPackageName())){
 				continue;
 			}
-			
+			//設定アプリはロック対象から外す
+			if(packageName.equals("com.android.settings")){
+				continue;
+			}
+					
 			AppData data = new AppData();
 
 			//アプリ名の設定
@@ -483,7 +497,7 @@ public class AppLockActivity extends Activity {
         for(int i=0; i<length; i++){
         	AppData item = adapter.getItem(i);
         	if(item.getLockFlag()){
-        		//Log.d(TAG, "lock = " + item.getPackageName());
+        		Log.d(TAG, "lock = " + item.getPackageName());
         		editor.putString(""+(++num), item.getPackageName());
         	}
         }

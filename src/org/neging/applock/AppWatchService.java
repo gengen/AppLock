@@ -45,19 +45,19 @@ public class AppWatchService extends Service {
 		
 		if(mInit){
 			displayNotificationArea();
-
-			mLockList = new ArrayList<String>();
-			SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
-			Map map = prefs.getAll();
-			int num = map.size();
-			//Log.d(AppLockActivity.TAG, "num = " + num);
-			for(int i=1; i<=num; i++){
-				String name = (String)map.get(""+i);
-				mLockList.add(name);
-				//Log.d(AppLockActivity.TAG, "name = " + name);
-			}
 		}
 		mInit = false;
+		
+		mLockList = new ArrayList<String>();
+		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
+		Map map = prefs.getAll();
+		int num = map.size();
+		//Log.d(AppLockActivity.TAG, "num = " + num);
+		for(int i=1; i<=num; i++){
+			String name = (String)map.get(""+i);
+			mLockList.add(name);
+			//Log.d(AppLockActivity.TAG, "name = " + name);
+		}
 		
 		startAlarmManager(AlarmManager.RTC, System.currentTimeMillis() + 1000);
 		ActivityManager am = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
@@ -68,12 +68,12 @@ public class AppWatchService extends Service {
 		//Log.d(AppLockActivity.TAG, "top app = " + top);
 
 		for(String name: mLockList){
-			//Log.d(AppLockActivity.TAG, "name = " + name);
+			Log.d(AppLockActivity.TAG, "name = " + name);
 
 			if(name.equals(top)) {
 				//Log.d(AppLockActivity.TAG, "Lock App Launch!!");
 				//ホームアプリ起動
-				Intent i = new Intent(); 
+				Intent i = new Intent();
 				i.setAction(Intent.ACTION_MAIN); 
 				i.addCategory(Intent.CATEGORY_HOME); 
 				i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
