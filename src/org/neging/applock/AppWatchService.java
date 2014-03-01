@@ -24,7 +24,7 @@ import android.util.Log;
 
 public class AppWatchService extends Service {
 	static ArrayList<String> mLockList;
-	boolean mInit = true;
+	static boolean mInit = true;
 
 	@Override
 	public void onCreate(){
@@ -45,15 +45,15 @@ public class AppWatchService extends Service {
 		
 		if(mInit){
 			displayNotificationArea();
+			mInit = false;
 		}
-		mInit = false;
 		
 		mLockList = new ArrayList<String>();
 		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 		Map map = prefs.getAll();
-		int num = map.size();
+		int lockNum = map.size();
 		//Log.d(AppLockActivity.TAG, "num = " + num);
-		for(int i=1; i<=num; i++){
+		for(int i=1; i<=lockNum; i++){
 			String name = (String)map.get(""+i);
 			mLockList.add(name);
 			//Log.d(AppLockActivity.TAG, "name = " + name);
@@ -68,7 +68,7 @@ public class AppWatchService extends Service {
 		//Log.d(AppLockActivity.TAG, "top app = " + top);
 
 		for(String name: mLockList){
-			Log.d(AppLockActivity.TAG, "name = " + name);
+			//Log.d(AppLockActivity.TAG, "name = " + name);
 
 			if(name.equals(top)) {
 				//Log.d(AppLockActivity.TAG, "Lock App Launch!!");
@@ -166,5 +166,6 @@ public class AppWatchService extends Service {
 		//Notificationを非表示
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         manager.cancel(R.string.app_name);   
+        mInit = true;
 	}
 }

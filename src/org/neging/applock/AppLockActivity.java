@@ -121,11 +121,6 @@ public class AppLockActivity extends Activity {
         	return;
         }
         
-        //タイミングによってロック解除されないことがあるため、いったんサービス側のアラームマネージャを止める
-    	Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
-    	intent.putExtra(SERVICE_PENDING, true);
-    	startService(intent);
-        
 		setTitle(getString(R.string.title));
 		int mode = INIT_LAUNCH;
 		//パスワードが設定されているか？
@@ -133,6 +128,16 @@ public class AppLockActivity extends Activity {
 		boolean flag = prefs.getBoolean(PASSWORD_FLAG, false);
 		if(flag){
 			mode = NORMAL_LAUNCH;
+
+			SharedPreferences lockPref = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
+			Map map = lockPref.getAll();
+			if(map.size() > 0){
+				//タイミングによってロック解除されないことがあるため、いったんサービス側のアラームマネージャを止める
+				//パスワード設定していないときにこれを入れると勝手にロックが掛かってしまったため、ここに移動
+				Intent intent = new Intent(AppLockActivity.this, AppWatchService.class);
+				intent.putExtra(SERVICE_PENDING, true);
+				startService(intent);
+			}
 		}
 
 		Bundle extras = getIntent().getExtras();
@@ -173,6 +178,14 @@ public class AppLockActivity extends Activity {
 	    });
 	    builder.setNegativeButton(R.string.dialog_password_cancel, new DialogInterface.OnClickListener() {
 	    	public void onClick(DialogInterface dialog, int whichButton) {
+	    		/*
+	    		if(mode == INIT_LAUNCH){
+	    			SharedPreferences pref = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
+	        		Editor edit = pref.edit();
+	        		edit.putBoolean(PASSWORD_FLAG, false);
+	        		edit.commit();
+	    		}
+	    		*/
 	    		if(mode != CHANGE_PASSWORD){
 	    			//アプリ終了
 	    			finish();
@@ -497,7 +510,6 @@ public class AppLockActivity extends Activity {
         for(int i=0; i<length; i++){
         	AppData item = adapter.getItem(i);
         	if(item.getLockFlag()){
-        		Log.d(TAG, "lock = " + item.getPackageName());
         		editor.putString(""+(++num), item.getPackageName());
         	}
         }
