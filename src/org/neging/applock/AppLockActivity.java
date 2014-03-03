@@ -1,5 +1,6 @@
 package org.neging.applock;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,8 @@ import android.widget.Toast;
 
 public class AppLockActivity extends Activity {
 	public static final String TAG = "AppLock";
+	public static final boolean DEBUG = false;
+	
 	public static final String PREF_LOCK = "LockAppList";
 
 	public static final String PREF_PASSWORD = "Password";
@@ -53,7 +56,9 @@ public class AppLockActivity extends Activity {
 	public static final String PREF_MODE = "Mode";
 	public static final String MODE_UNLOCK = "unlock";
 	
-	public static final String SERVICE_PENDING = "pending";	
+	//for1.1
+	//TODO いつかは記述削除
+	//public static final String SERVICE_PENDING = "pending";	
 	
 	public static final int INIT_LAUNCH = 1;
 	public static final int NORMAL_LAUNCH = 2;
@@ -129,6 +134,10 @@ public class AppLockActivity extends Activity {
 		if(flag){
 			mode = NORMAL_LAUNCH;
 
+			//ダイアログ表示中にホームボタンで戻るとアラームマネージャが止まったままになるため削除
+			//for1.1
+			//TODO いつかは記述削除
+			/*
 			SharedPreferences lockPref = getSharedPreferences(AppLockActivity.PREF_LOCK, Context.MODE_PRIVATE);
 			Map map = lockPref.getAll();
 			if(map.size() > 0){
@@ -138,6 +147,7 @@ public class AppLockActivity extends Activity {
 				intent.putExtra(SERVICE_PENDING, true);
 				startService(intent);
 			}
+			*/
 		}
 
 		Bundle extras = getIntent().getExtras();
@@ -232,7 +242,7 @@ public class AppLockActivity extends Activity {
 	private void checkPassword(String password, int mode){
 		SharedPreferences prefs = getSharedPreferences(AppLockActivity.PREF_PASSWORD, Context.MODE_PRIVATE);
 		
-		//初回起動時はパスワードを保存
+		//初回起動時およびパスワード変更時はパスワードを保存
     	if(mode == INIT_LAUNCH || mode == CHANGE_PASSWORD){
     		//パスワードが1-8文字の間でないとき
     		if((password.length() == 0) || (password.length() > 8)){
@@ -627,5 +637,27 @@ public class AppLockActivity extends Activity {
 			}
     	});
     	mInterstitial.showDialog(this);
+    }
+    
+    @Override
+	public void onDestroy(){
+    	super.onDestroy();
+    	deleteCache(getCacheDir());
+    }
+    
+    public static boolean deleteCache(File dir) {
+        if(dir==null) {
+            return false;
+        }
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteCache(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        return dir.delete();
     }
 }

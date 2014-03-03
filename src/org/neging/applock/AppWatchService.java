@@ -28,11 +28,26 @@ public class AppWatchService extends Service {
 
 	@Override
 	public void onCreate(){
+		if(AppLockActivity.DEBUG){
+			Log.d(AppLockActivity.TAG, "AppWatchService onCreate");
+		}
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
+		if(AppLockActivity.DEBUG){
+			Log.d(AppLockActivity.TAG, "AppWatchService onStart");
+		}
+
+		//ダイアログ表示中にホームボタンで戻るとアラームマネージャが止まったままになるため削除
+		//for1.1
+		//TODO いつかは記述削除
+		/*
 		if(intent != null){
+			if(AppLockActivity.DEBUG){
+				Log.d(AppLockActivity.TAG, "AppWatchService onStart->SERVICE_PENDING");
+			}
+			
 			Bundle extras = intent.getExtras();
 			if(extras != null){
 				boolean isPending = extras.getBoolean(AppLockActivity.SERVICE_PENDING);
@@ -42,6 +57,7 @@ public class AppWatchService extends Service {
 				}
 			}
 		}
+		*/
 		
 		if(mInit){
 			displayNotificationArea();
@@ -160,12 +176,22 @@ public class AppWatchService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 		
+		if(AppLockActivity.DEBUG){
+			Log.d(AppLockActivity.TAG, "AppWatchService onDestroy");
+		}
+		
         //AlarmManager解除
 		stopAlarmManager();
+		
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			//nothing to do
+		}
 
 		//Notificationを非表示
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.cancel(R.string.app_name);   
+        manager.cancel(R.string.app_name);
         mInit = true;
 	}
 }
