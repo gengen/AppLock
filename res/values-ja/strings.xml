@@ -8,7 +8,7 @@
     
     <string name="app_finish_title">アプリを終了しますか？</string>
     <string name="app_finish_ok">OK</string>
-    <string name="app_finish_cancel">Cancel</string>
+    <string name="app_finish_cancel">NO</string>
     
     <string name="dialog_password_title_init">初期パスワードを設定してください</string>
     <string name="dialog_password_title_normal">パスワード</string>
